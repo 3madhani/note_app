@@ -34,16 +34,15 @@ class NotesLocalDataSource {
     }
   }
 
-  Future<void> togglePinNote(String noteId) async {
+  Future<NoteModel> togglePinNote(String noteId) async {
     try {
       final note = _notesBox.get(noteId);
       if (note == null) {
         throw const AppException('This note could not be found.');
       }
-      await _notesBox.put(
-        noteId,
-        note.copyWith(isPinned: !note.isPinned, updatedAt: DateTime.now()),
-      );
+      final updatedNote = note.copyWith(isPinned: !note.isPinned, updatedAt: DateTime.now());
+      await _notesBox.put(noteId, updatedNote);
+      return updatedNote;
     } on AppException {
       rethrow;
     } catch (error) {

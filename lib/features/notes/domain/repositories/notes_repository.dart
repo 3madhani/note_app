@@ -9,5 +9,5 @@ abstract interface class NotesRepository {
 
   Future<void> deleteNote(String noteId);
 
-  Future<void> togglePinNote(String noteId);
+  Future<NoteEntity> togglePinNote(String noteId);
 }

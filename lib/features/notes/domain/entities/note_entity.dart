@@ -15,12 +15,7 @@ class NoteEntity {
   final DateTime updatedAt;
   final bool isPinned;
 
-  NoteEntity copyWith({
-    String? title,
-    String? content,
-    DateTime? updatedAt,
-    bool? isPinned,
-  }) {
+  NoteEntity copyWith({String? title, String? content, DateTime? updatedAt, bool? isPinned}) {
     return NoteEntity(
       id: id,
       title: title ?? this.title,

@@ -17,11 +17,14 @@ class NotesRepositoryImpl implements NotesRepository {
   Future<void> addNote(NoteEntity note) => _localDataSource.addNote(NoteModel.fromEntity(note));
 
   @override
-  Future<void> updateNote(NoteEntity note) => _localDataSource.updateNote(NoteModel.fromEntity(note));
+  Future<void> updateNote(NoteEntity note) =>
+      _localDataSource.updateNote(NoteModel.fromEntity(note));
 
   @override
   Future<void> deleteNote(String noteId) => _localDataSource.deleteNote(noteId);
 
   @override
-  Future<void> togglePinNote(String noteId) => _localDataSource.togglePinNote(noteId);
+  Future<NoteEntity> togglePinNote(String noteId) async {
+    return (await _localDataSource.togglePinNote(noteId)).toEntity();
+  }
 }
