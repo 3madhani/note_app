@@ -1,16 +1,17 @@
 import '../../domain/entities/note_entity.dart';
-import '../providers/notes_provider.dart';
+import '../bloc/notes_bloc.dart';
 
 abstract final class NoteEditorActions {
-  static Future<bool> save({
-    required NotesProvider provider,
+  static void save({
+    required NotesBloc bloc,
     required NoteEntity? note,
     required String title,
     required String content,
   }) {
     if (note == null) {
-      return provider.addNote(title: title, content: content);
+      bloc.add(NotesAddRequested(title: title, content: content));
+      return;
     }
-    return provider.updateNote(note, title: title, content: content);
+    bloc.add(NotesUpdateRequested(note: note, title: title, content: content));
   }
 }

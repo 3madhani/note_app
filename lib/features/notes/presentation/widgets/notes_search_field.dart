@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../providers/notes_provider.dart';
+import '../bloc/notes_bloc.dart';
 
 class NotesSearchField extends StatefulWidget {
   const NotesSearchField({super.key});
@@ -19,7 +19,7 @@ class _NotesSearchFieldState extends State<NotesSearchField> {
       onSubmitted: (_) => FocusScope.of(context).unfocus(),
       controller: _controller,
       onChanged: (value) {
-        context.read<NotesProvider>().setSearchQuery(value);
+        BlocProvider.of<NotesBloc>(context).add(NotesSearchQueryChanged(value));
         setState(() {});
       },
       textInputAction: TextInputAction.search,
@@ -33,7 +33,7 @@ class _NotesSearchFieldState extends State<NotesSearchField> {
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _controller.clear();
-                  context.read<NotesProvider>().setSearchQuery('');
+                  BlocProvider.of<NotesBloc>(context).add(const NotesSearchQueryChanged(''));
                   setState(() {});
                 },
               ),
@@ -50,6 +50,8 @@ class _NotesSearchFieldState extends State<NotesSearchField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: context.read<NotesProvider>().searchQuery);
+    _controller = TextEditingController(
+      text: BlocProvider.of<NotesBloc>(context).state.searchQuery,
+    );
   }
 }

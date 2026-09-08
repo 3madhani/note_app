@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../core/widgets/app_responsive_content.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/note_entity.dart';
 import '../actions/notes_list_actions.dart';
-import '../providers/notes_provider.dart';
+import '../bloc/notes_bloc.dart';
 import 'note_card.dart';
 
 class NotesListContent extends StatelessWidget {
@@ -15,14 +16,23 @@ class NotesListContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<NotesProvider, bool>(
-      selector: (_, provider) => provider.isLoading,
-      builder: (context, isLoading, _) {
-        if (isLoading) {
-          return const AppLoadingView(label: 'Loading notes');
-        }
-        return const _NotesResults();
+    return BlocListener<NotesBloc, NotesState>(
+      listenWhen: (previous, current) =>
+          previous.operationId != current.operationId &&
+          (current.operation == NotesOperation.delete ||
+              current.operation == NotesOperation.togglePin),
+      listener: (context, state) {
+        AppSnackbar.show(context, state.feedbackMessage ?? 'Unable to update this note.');
       },
+      child: BlocSelector<NotesBloc, NotesState, bool>(
+        selector: (state) => state.isLoading,
+        builder: (context, isLoading) {
+          if (isLoading) {
+            return const AppLoadingView(label: 'Loading notes');
+          }
+          return const _NotesResults();
+        },
+      ),
     );
   }
 }
@@ -32,10 +42,10 @@ class _NotesResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<NotesProvider, _NotesListViewData>(
-      selector: (_, provider) =>
-          _NotesListViewData(notes: provider.visibleNotes, searchQuery: provider.searchQuery),
-      builder: (context, data, _) {
+    return BlocSelector<NotesBloc, NotesState, _NotesListViewData>(
+      selector: (state) =>
+          _NotesListViewData(notes: state.visibleNotes, searchQuery: state.searchQuery),
+      builder: (context, data) {
         if (data.notes.isEmpty) {
           return AppEmptyState(
             icon: data.isSearching ? Icons.search_off_outlined : Icons.sticky_note_2_outlined,

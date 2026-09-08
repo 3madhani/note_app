@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/widgets/app_confirmation_dialog.dart';
-import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/note_entity.dart';
-import '../providers/notes_provider.dart';
+import '../bloc/notes_bloc.dart';
 import '../screens/note_editor_screen.dart';
 
 abstract final class NotesListActions {
@@ -14,17 +13,8 @@ abstract final class NotesListActions {
     ).push(MaterialPageRoute<void>(builder: (_) => NoteEditorScreen(note: note)));
   }
 
-  static Future<void> togglePin(BuildContext context, NoteEntity note) async {
-    final provider = context.read<NotesProvider>();
-    final saved = await provider.togglePinNote(note.id);
-    if (!context.mounted) {
-      return;
-    }
-
-    AppSnackbar.show(
-      context,
-      saved ? (note.isPinned ? 'Note unpinned' : 'Note pinned') : provider.errorMessage ?? '',
-    );
+  static void togglePin(BuildContext context, NoteEntity note) {
+    BlocProvider.of<NotesBloc>(context).add(NotesPinToggled(note.id));
   }
 
   static Future<void> confirmAndDelete(BuildContext context, NoteEntity note) async {
@@ -41,12 +31,6 @@ abstract final class NotesListActions {
       return;
     }
 
-    final provider = context.read<NotesProvider>();
-    final deleted = await provider.deleteNote(note.id);
-    if (!context.mounted) {
-      return;
-    }
-
-    AppSnackbar.show(context, deleted ? 'Note deleted' : provider.errorMessage ?? '');
+    BlocProvider.of<NotesBloc>(context).add(NotesDeleteRequested(note.id));
   }
 }

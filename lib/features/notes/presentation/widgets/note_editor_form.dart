@@ -6,14 +6,12 @@ class NoteEditorForm extends StatelessWidget {
     required this.titleController,
     required this.contentController,
     required this.isEditing,
-    required this.isSaving,
     required this.onSave,
   });
 
   final TextEditingController titleController;
   final TextEditingController contentController;
   final bool isEditing;
-  final bool isSaving;
   final VoidCallback? onSave;
 
   @override

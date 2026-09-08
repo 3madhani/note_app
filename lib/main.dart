@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:provider/provider.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
@@ -12,7 +12,7 @@ import 'features/notes/domain/usecases/delete_note_usecase.dart';
 import 'features/notes/domain/usecases/get_notes_usecase.dart';
 import 'features/notes/domain/usecases/toggle_pin_note_usecase.dart';
 import 'features/notes/domain/usecases/update_note_usecase.dart';
-import 'features/notes/presentation/providers/notes_provider.dart';
+import 'features/notes/presentation/bloc/notes_bloc.dart';
 import 'features/notes/presentation/screens/notes_list_screen.dart';
 
 Future<void> main() async {
@@ -27,26 +27,38 @@ Future<void> main() async {
 
   runApp(
     NotesApp(
-      notesProvider: NotesProvider(
-        GetNotesUseCase(repository),
-        AddNoteUseCase(repository),
-        UpdateNoteUseCase(repository),
-        DeleteNoteUseCase(repository),
-        TogglePinNoteUseCase(repository),
-      )..loadNotes(),
+      getNotes: GetNotesUseCase(repository),
+      addNote: AddNoteUseCase(repository),
+      updateNote: UpdateNoteUseCase(repository),
+      deleteNote: DeleteNoteUseCase(repository),
+      togglePinNote: TogglePinNoteUseCase(repository),
     ),
   );
 }
 
 class NotesApp extends StatelessWidget {
-  final NotesProvider notesProvider;
+  const NotesApp({
+    super.key,
+    required this.getNotes,
+    required this.addNote,
+    required this.updateNote,
+    required this.deleteNote,
+    required this.togglePinNote,
+  });
 
-  const NotesApp({super.key, required this.notesProvider});
+  final GetNotesUseCase getNotes;
+  final AddNoteUseCase addNote;
+  final UpdateNoteUseCase updateNote;
+  final DeleteNoteUseCase deleteNote;
+  final TogglePinNoteUseCase togglePinNote;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: notesProvider,
+    return BlocProvider(
+      lazy: false,
+      create: (_) =>
+          NotesBloc(getNotes, addNote, updateNote, deleteNote, togglePinNote)
+            ..add(const NotesStarted()),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: AppConstants.appName,
