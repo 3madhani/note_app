@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'features/notes/data/datasources/notes_local_data_source.dart';
-import 'features/notes/data/models/note_model.dart';
 import 'features/notes/data/repositories/notes_repository_impl.dart';
 import 'features/notes/domain/usecases/add_note_usecase.dart';
 import 'features/notes/domain/usecases/delete_note_usecase.dart';
@@ -17,12 +15,7 @@ import 'features/notes/presentation/screens/notes_list_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  if (!Hive.isAdapterRegistered(NoteModelAdapter().typeId)) {
-    Hive.registerAdapter(NoteModelAdapter());
-  }
-  final notesBox = await Hive.openBox<NoteModel>(AppConstants.notesBoxName);
-  final localDataSource = NotesLocalDataSource(notesBox);
+  final localDataSource = await NotesLocalDataSource.create();
   final repository = NotesRepositoryImpl(localDataSource);
 
   runApp(

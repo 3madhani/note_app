@@ -10,7 +10,7 @@ class NotesRepositoryImpl implements NotesRepository {
 
   @override
   Future<List<NoteEntity>> getNotes() async {
-    return _localDataSource.getNotes().map((model) => model.toEntity()).toList(growable: false);
+    return (await _localDataSource.getNotes()).map((model) => model.toEntity()).toList(growable: false);
   }
 
   @override

@@ -1,16 +1,45 @@
-import 'package:hive/hive.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/app_exception.dart';
 import '../models/note_model.dart';
 
 class NotesLocalDataSource {
-  const NotesLocalDataSource(this._notesBox);
+  const NotesLocalDataSource(this._database);
 
-  final Box<NoteModel> _notesBox;
+  static const _notesTable = 'notes';
 
-  List<NoteModel> getNotes() {
+  final Database _database;
+
+  static Future<NotesLocalDataSource> create() async {
+    final databaseDirectory = await getDatabasesPath();
+    final database = await openDatabase(
+      join(databaseDirectory, AppConstants.notesDatabaseName),
+      version: 1,
+      onCreate: (database, version) async {
+        await database.execute('''
+          CREATE TABLE $_notesTable(
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            is_pinned INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
+      },
+    );
+    return NotesLocalDataSource(database);
+  }
+
+  Future<List<NoteModel>> getNotes() async {
     try {
-      return _notesBox.values.toList(growable: false);
+      final notes = await _database.query(
+        _notesTable,
+        orderBy: 'is_pinned DESC, updated_at DESC',
+      );
+      return notes.map(NoteModel.fromMap).toList(growable: false);
     } catch (error) {
       throw AppException('Unable to load your notes.', error);
     }
@@ -18,7 +47,7 @@ class NotesLocalDataSource {
 
   Future<void> addNote(NoteModel note) async {
     try {
-      await _notesBox.put(note.id, note);
+      await _database.insert(_notesTable, note.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     } catch (error) {
       throw AppException('Unable to save this note.', error);
     }
@@ -28,7 +57,7 @@ class NotesLocalDataSource {
 
   Future<void> deleteNote(String noteId) async {
     try {
-      await _notesBox.delete(noteId);
+      await _database.delete(_notesTable, where: 'id = ?', whereArgs: [noteId]);
     } catch (error) {
       throw AppException('Unable to delete this note.', error);
     }
@@ -36,13 +65,27 @@ class NotesLocalDataSource {
 
   Future<NoteModel> togglePinNote(String noteId) async {
     try {
-      final note = _notesBox.get(noteId);
-      if (note == null) {
-        throw const AppException('This note could not be found.');
-      }
-      final updatedNote = note.copyWith(isPinned: !note.isPinned, updatedAt: DateTime.now());
-      await _notesBox.put(noteId, updatedNote);
-      return updatedNote;
+      return await _database.transaction<NoteModel>((transaction) async {
+        final notes = await transaction.query(
+          _notesTable,
+          where: 'id = ?',
+          whereArgs: [noteId],
+          limit: 1,
+        );
+        if (notes.isEmpty) {
+          throw const AppException('This note could not be found.');
+        }
+
+        final note = NoteModel.fromMap(notes.single);
+        final updatedNote = note.copyWith(isPinned: !note.isPinned, updatedAt: DateTime.now());
+        await transaction.update(
+          _notesTable,
+          updatedNote.toMap(),
+          where: 'id = ?',
+          whereArgs: [noteId],
+        );
+        return updatedNote;
+      });
     } on AppException {
       rethrow;
     } catch (error) {

@@ -1,11 +1,6 @@
-import 'package:hive/hive.dart';
-
 import '../../domain/entities/note_entity.dart';
 
-part 'note_model.g.dart';
-
-@HiveType(typeId: 0)
-class NoteModel extends HiveObject {
+class NoteModel {
   NoteModel({
     required this.id,
     required this.title,
@@ -15,22 +10,16 @@ class NoteModel extends HiveObject {
     required this.isPinned,
   });
 
-  @HiveField(0)
   final String id;
 
-  @HiveField(1)
   final String title;
 
-  @HiveField(2)
   final String content;
 
-  @HiveField(3)
   final DateTime createdAt;
 
-  @HiveField(4)
   final DateTime updatedAt;
 
-  @HiveField(5)
   final bool isPinned;
 
   factory NoteModel.fromEntity(NoteEntity note) {
@@ -53,6 +42,28 @@ class NoteModel extends HiveObject {
       updatedAt: updatedAt,
       isPinned: isPinned,
     );
+  }
+
+  factory NoteModel.fromMap(Map<String, Object?> map) {
+    return NoteModel(
+      id: map['id']! as String,
+      title: map['title']! as String,
+      content: map['content']! as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at']! as int),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at']! as int),
+      isPinned: (map['is_pinned']! as int) == 1,
+    );
+  }
+
+  Map<String, Object> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'created_at': createdAt.millisecondsSinceEpoch,
+      'updated_at': updatedAt.millisecondsSinceEpoch,
+      'is_pinned': isPinned ? 1 : 0,
+    };
   }
 
   NoteModel copyWith({bool? isPinned, DateTime? updatedAt}) {
